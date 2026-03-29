@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tier List Tool</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #1e1e1e;
+    color: white;
+    text-align: center;
+    margin: 0;
+}
+
+h2 {
+    margin: 10px;
+}
+
+.tier-container {
+    width: 95%;
+    margin: auto;
+}
+
+.tier {
+    display: flex;
+    margin: 6px 0;
+}
+
+.label {
+    width: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: black;
+}
+
+.items {
+    flex: 1;
+    min-height: 90px;
+    background: #2a2a2a;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 5px;
+}
+
+.item {
+    margin: 5px;
+    cursor: grab;
+}
+
+.item img {
+    width: 75px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.toolbar {
+    margin: 15px;
+}
+
+button {
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+input {
+    margin: 10px;
+}
+
+.s { background: #ff595e; }
+.a { background: #ffca3a; }
+.b { background: #8ac926; }
+.c { background: #1982c4; }
+.d { background: #6a4c93; }
+</style>
+</head>
+
+<body>
+
+<h2>Tier List Maker (Image + Auto Save)</h2>
+
+<div class="tier-container" id="tiers"></div>
+
+<div class="toolbar">
+    <input type="file" id="upload" multiple accept="image/*">
+    <br>
+    <button onclick="clearAll()">Clear All</button>
+</div>
+
+<script>
+// -------- CREATE TIERS --------
+const tiers = [
+    { label: "S", class: "s" },
+    { label: "A", class: "a" },
+    { label: "B", class: "b" },
+    { label: "C", class: "c" },
+    { label: "D", class: "d" }
+];
+
+const container = document.getElementById("tiers");
+
+tiers.forEach(t => {
+    const tier = document.createElement("div");
+    tier.className = "tier";
+
+    const label = document.createElement("div");
+    label.className = "label " + t.class;
+    label.innerText = t.label;
+
+    const items = document.createElement("div");
+    items.className = "items";
+    items.dataset.tier = t.label;
+
+    items.ondragover = e => e.preventDefault();
+    items.ondrop = dropItem;
+
+    tier.appendChild(label);
+    tier.appendChild(items);
+    container.appendChild(tier);
+});
+
+// -------- DRAG SYSTEM --------
+let draggedItem = null;
+
+function createItem(src) {
+    const div = document.createElement("div");
+    div.className = "item";
+    div.draggable = true;
+
+    const img = document.createElement("img");
+    img.src = src;
+
+    div.appendChild(img);
+
+    div.ondragstart = () => draggedItem = div;
+    div.ondragend = saveData;
+
+    return div;
+}
+
+function dropItem(e) {
+    e.preventDefault();
+    if (draggedItem) {
+        e.currentTarget.appendChild(draggedItem);
+        saveData();
+    }
+}
+
+// -------- IMAGE UPLOAD --------
+document.getElementById("upload").addEventListener("change", function(e) {
+    const files = e.target.files;
+
+    for (let file of files) {
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            const item = createItem(event.target.result);
+            document.querySelector(".items").appendChild(item);
+            saveData();
+        };
+
+        reader.readAsDataURL(file);
+    }
+});
+
+// -------- SAVE DATA --------
+function saveData() {
+    const data = [];
+
+    document.querySelectorAll(".items").forEach(tier => {
+        const tierName = tier.dataset.tier;
+        const images = [];
+
+        tier.querySelectorAll("img").forEach(img => {
+            images.push(img.src);
+        });
+
+        data.push({ tier: tierName, items: images });
+    });
+
+    localStorage.setItem("tierListData", JSON.stringify(data));
+}
+
+// -------- LOAD DATA --------
+function loadData() {
+    const saved = JSON.parse(localStorage.getItem("tierListData"));
+    if (!saved) return;
+
+    saved.forEach(t => {
+        const tierDiv = [...document.querySelectorAll(".items")]
+            .find(el => el.dataset.tier === t.tier);
+
+        if (tierDiv) {
+            t.items.forEach(src => {
+                tierDiv.appendChild(createItem(src));
+            });
+        }
+    });
+}
+
+// -------- CLEAR --------
+function clearAll() {
+    if (confirm("Are you sure?")) {
+        localStorage.removeItem("tierListData");
+        location.reload();
+    }
+}
+
+// -------- INIT --------
+loadData();
+</script>
+
+</body>
+</html>
