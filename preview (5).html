@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firebase Test</title>
+</head>
+<body>
+
+  <h2>Firebase Login Test</h2>
+
+  <button onclick="login()">Login with Google</button>
+  <button onclick="logout()">Logout</button>
+
+  <pre id="output">Loading...</pre>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } 
+    from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv9NgB8e3UqjrdJP6U2hy0B9agZwRtNTM",
+      authDomain: "sauravtask-e2e49.firebaseapp.com",
+      projectId: "sauravtask-e2e49",
+      storageBucket: "sauravtask-e2e49.appspot.com",
+      messagingSenderId: "997442277464",
+      appId: "1:997442277464:web:96eab391449df141e03a2d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    window.login = async function () {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        alert(e.message);
+      }
+    };
+
+    window.logout = async function () {
+      await signOut(auth);
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      const el = document.getElementById("output");
+      if (user) {
+        el.innerText = `
+UID: ${user.uid}
+Name: ${user.displayName}
+Email: ${user.email}
+        `;
+      } else {
+        el.innerText = "Not logged in";
+      }
+    });
+  </script>
+
+</body>
+</html>
